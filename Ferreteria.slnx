@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Ferreteria.Domain/Ferreteria.Domain.csproj" />
+    <Project Path="src/Ferreteria.Shared/Ferreteria.Shared.csproj" />
   </Folder>
 </Solution>
