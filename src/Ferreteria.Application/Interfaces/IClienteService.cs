@@ -1,5 +1,7 @@
 ﻿using Ferreteria.Shared.Dtos.Clientes;
-
+using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace Ferreteria.Application.Interfaces
 {

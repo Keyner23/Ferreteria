@@ -1,5 +1,7 @@
 ﻿using Ferreteria.Shared.Dtos.Auth;
-
+using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace Ferreteria.Application.Interfaces
 {
@@ -9,3 +11,4 @@ namespace Ferreteria.Application.Interfaces
         Task<LoginResponse> LoginAsync(LoginRequest request);
     }
 }
+

@@ -1,5 +1,7 @@
 ﻿using Ferreteria.Shared.Dtos.Productos;
-
+using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace Ferreteria.Application.Interfaces
 {
@@ -12,3 +14,4 @@ namespace Ferreteria.Application.Interfaces
         Task DesactivarAsync(int id);
     }
 }
+

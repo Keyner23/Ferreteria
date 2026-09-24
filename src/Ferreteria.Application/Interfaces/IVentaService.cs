@@ -1,8 +1,11 @@
 ﻿using Ferreteria.Shared.Dtos.Ventas;
-
+using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace Ferreteria.Application.Interfaces
 {
+
     public interface IVentaService
     {
         /// <summary>Registra una venta. El clienteId viene del token, no del cuerpo.</summary>
