@@ -1,7 +1,5 @@
 ﻿using Ferreteria.Application.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Text;
+
 
 namespace Ferreteria.Infrastructure.Auth
 {
