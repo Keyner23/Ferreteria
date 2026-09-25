@@ -1,7 +1,5 @@
 ﻿using Ferreteria.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Text;
+
 
 namespace Ferreteria.Application.Interfaces
 {
