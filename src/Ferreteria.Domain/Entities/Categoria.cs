@@ -1,0 +1,15 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Ferreteria.Domain.Entities
+{
+
+    public class Categoria
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+
+        public ICollection<Producto> Productos { get; set; } = new List<Producto>();
+    }
+}
