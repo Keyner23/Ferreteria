@@ -1,0 +1,15 @@
+.portada {
+    background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+    color: #fff;
+    border-radius: 0.75rem;
+}
+
+    .portada h1 {
+        font-size: 2rem;
+        max-width: 22ch;
+    }
+
+.portada-texto {
+    color: #d1d5db;
+    max-width: 55ch;
+}

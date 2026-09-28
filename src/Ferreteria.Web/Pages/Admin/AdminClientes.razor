@@ -1,0 +1,290 @@
+﻿@page "/admin/clientes"
+@attribute [Authorize(Roles = "Admin")]
+@inject IClienteApi ClienteApi
+@inject IJSRuntime JS
+
+<PageTitle>Clientes</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Clientes</h1>
+    <div>
+        <div class="form-check form-switch d-inline-block me-3">
+            <input class="form-check-input" type="checkbox" id="inactivos"
+                   checked="@verInactivos" @onchange="AlternarInactivosAsync" />
+            <label class="form-check-label" for="inactivos">Ver inactivos</label>
+        </div>
+        <button class="btn btn-primary" @onclick="Nuevo" disabled="@(formulario is not null)">
+            Nuevo cliente
+        </button>
+    </div>
+</div>
+
+@if (mensaje is not null)
+{
+    <div class="alert alert-@tipoMensaje alert-dismissible" role="alert">
+        @mensaje
+        <button type="button" class="btn-close" @onclick="() => mensaje = null"></button>
+    </div>
+}
+
+@if (formulario is not null)
+{
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">@(editandoId is null ? "Nuevo cliente de mostrador" : $"Editar cliente #{editandoId}")</h5>
+
+            @if (editandoId is null)
+            {
+                <p class="text-body-secondary small">
+                    Este cliente no tendrá cuenta de acceso. Los clientes con cuenta se registran ellos mismos.
+                </p>
+            }
+
+            <EditForm Model="@formulario" OnValidSubmit="@GuardarAsync" FormName="cliente">
+                <DataAnnotationsValidator />
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Nombre</label>
+                        <InputText class="form-control" @bind-Value="formulario.Nombre" />
+                        <ValidationMessage For="@(() => formulario.Nombre)" />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Apellido</label>
+                        <InputText class="form-control" @bind-Value="formulario.Apellido" />
+                        <ValidationMessage For="@(() => formulario.Apellido)" />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Documento</label>
+                        <InputText class="form-control" @bind-Value="formulario.Documento" />
+                        <ValidationMessage For="@(() => formulario.Documento)" />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Teléfono</label>
+                        <InputText class="form-control" @bind-Value="formulario.Telefono" />
+                        <ValidationMessage For="@(() => formulario.Telefono)" />
+                    </div>
+
+                    <div class="col-md-5">
+                        <label class="form-label">Dirección</label>
+                        <InputText class="form-control" @bind-Value="formulario.Direccion" />
+                        <ValidationMessage For="@(() => formulario.Direccion)" />
+                    </div>
+
+                    <div class="col-md-3 d-flex align-items-end">
+                        <div class="form-check">
+                            <InputCheckbox class="form-check-input" id="activo" @bind-Value="formulario.Activo" />
+                            <label class="form-check-label" for="activo">Activo</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-success" disabled="@guardando">
+                        @(guardando ? "Guardando..." : "Guardar")
+                    </button>
+                    <button type="button" class="btn btn-secondary ms-2" @onclick="Cancelar">Cancelar</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@if (cargando)
+{
+    <p><em>Cargando...</em></p>
+}
+else if (clientes.Count == 0)
+{
+    <p><em>No hay clientes registrados.</em></p>
+}
+else
+{
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Documento</th>
+                <th>Contacto</th>
+                <th>Cuenta</th>
+                <th>Estado</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var c in clientes)
+            {
+                <tr class="@(c.Activo ? "" : "table-secondary")">
+                    <td>
+                        <div>@c.Nombre @c.Apellido</div>
+                        @if (!string.IsNullOrWhiteSpace(c.Direccion))
+                        {
+                            <div class="text-body-secondary small">@c.Direccion</div>
+                        }
+                    </td>
+                    <td>@c.Documento</td>
+                    <td>@(c.Telefono ?? "—")</td>
+                    <td>
+                        @if (c.TieneCuenta)
+                        {
+                            <span class="badge bg-info text-dark">@c.Correo</span>
+                        }
+                        else
+                        {
+                            <span class="text-body-secondary small">Mostrador</span>
+                        }
+                    </td>
+                    <td>
+                        @if (c.Activo)
+                        {
+                            <span class="badge bg-success">Activo</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Inactivo</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-primary" @onclick="() => Editar(c)">Editar</button>
+                        @if (c.Activo)
+                        {
+                            <button class="btn btn-sm btn-outline-danger ms-1"
+                                    @onclick="() => DesactivarAsync(c)">Desactivar</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ClienteDto> clientes = new();
+
+    private ClienteRequest? formulario;
+    private int? editandoId;
+
+    private bool verInactivos;
+    private bool cargando = true;
+    private bool guardando;
+    private string? mensaje;
+    private string tipoMensaje = "success";
+
+    protected override async Task OnInitializedAsync() => await CargarAsync();
+
+    private async Task CargarAsync()
+    {
+        cargando = true;
+
+        try
+        {
+            clientes = await ClienteApi.ObtenerTodosAsync(verInactivos);
+        }
+        catch (ApiException ex)
+        {
+            Avisar(ex.Message, "danger");
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task AlternarInactivosAsync(ChangeEventArgs e)
+    {
+        verInactivos = e.Value is bool b && b;
+
+        await CargarAsync();
+    }
+
+    private void Nuevo()
+    {
+        editandoId = null;
+        formulario = new ClienteRequest { Activo = true };
+    }
+
+    private void Editar(ClienteDto c)
+    {
+        editandoId = c.Id;
+        formulario = new ClienteRequest
+        {
+            Nombre = c.Nombre,
+            Apellido = c.Apellido,
+            Documento = c.Documento,
+            Telefono = c.Telefono,
+            Direccion = c.Direccion,
+            Activo = c.Activo
+        };
+    }
+
+    private void Cancelar()
+    {
+        formulario = null;
+        editandoId = null;
+    }
+
+    private async Task GuardarAsync()
+    {
+        if (formulario is null)
+            return;
+
+        guardando = true;
+
+        try
+        {
+            if (editandoId is null)
+            {
+                var creado = await ClienteApi.CrearAsync(formulario);
+                Avisar($"Cliente '{creado.Nombre} {creado.Apellido}' creado.", "success");
+            }
+            else
+            {
+                await ClienteApi.ActualizarAsync(editandoId.Value, formulario);
+                Avisar("Cliente actualizado.", "success");
+            }
+
+            Cancelar();
+            await CargarAsync();
+        }
+        catch (ApiException ex)
+        {
+            Avisar(ex.Message, "danger");
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private async Task DesactivarAsync(ClienteDto c)
+    {
+        var advertencia = c.TieneCuenta
+            ? $"¿Desactivar a {c.Nombre} {c.Apellido}? También se le bloqueará el acceso a su cuenta."
+            : $"¿Desactivar a {c.Nombre} {c.Apellido}?";
+
+        if (!await JS.InvokeAsync<bool>("confirm", advertencia))
+            return;
+
+        try
+        {
+            await ClienteApi.DesactivarAsync(c.Id);
+
+            Avisar($"{c.Nombre} {c.Apellido} fue desactivado.", "success");
+
+            await CargarAsync();
+        }
+        catch (ApiException ex)
+        {
+            Avisar(ex.Message, "danger");
+        }
+    }
+
+    private void Avisar(string texto, string tipo)
+    {
+        mensaje = texto;
+        tipoMensaje = tipo;
+    }
+}

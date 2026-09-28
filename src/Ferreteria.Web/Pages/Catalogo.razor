@@ -1,0 +1,161 @@
+﻿@page "/catalogo"
+@inject IProductoApi ProductoApi
+@inject ICategoriaApi CategoriaApi
+@inject ICarritoService Carrito
+<PageTitle>Catálogo</PageTitle>
+
+<h1>Catálogo</h1>
+
+@if (cargando)
+{
+    <p><em>Cargando productos...</em></p>
+}
+else if (error is not null)
+{
+    <div class="alert alert-danger" role="alert">
+        @error
+        <button class="btn btn-sm btn-outline-danger ms-2" @onclick="CargarAsync">Reintentar</button>
+    </div>
+}
+else
+{
+    <div class="row mb-3">
+        <div class="col-md-5">
+            <input class="form-control" placeholder="Buscar por nombre o código..."
+                   value="@busqueda" @oninput="OnBuscar" />
+        </div>
+        <div class="col-md-4">
+            <select class="form-select" value="@categoriaId" @onchange="OnCambiarCategoria">
+                <option value="0">Todas las categorías</option>
+                @foreach (var c in categorias)
+                {
+                    <option value="@c.Id">@c.Nombre</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    @if (Filtrados.Count == 0)
+    {
+        <p><em>No hay productos que coincidan.</em></p>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-3 g-3">
+            @foreach (var p in Filtrados)
+            {
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body d-flex flex-column">
+                            <div class="mb-2">
+                                <span class="badge rounded-pill bg-body-secondary text-body-secondary fw-normal">
+                                    @p.CategoriaNombre
+                                </span>
+                            </div>
+
+                            <h5 class="card-title mb-1">@p.Nombre</h5>
+
+                            <p class="card-text small text-body-secondary">@p.Descripcion</p>
+
+                            <p class="fs-4 fw-bold precio mb-1">$@p.PrecioUnitario.ToString("N0", Cultura)</p>
+
+                            @if (p.Stock > 5)
+                            {
+                                <p class="text-success small mb-3">@p.Stock disponibles</p>
+                            }
+                            else if (p.Stock > 0)
+                            {
+                                <p class="text-warning-emphasis small mb-3">¡Últimas @p.Stock unidades!</p>
+                            }
+                            else
+                            {
+                                <p class="text-danger small mb-3">Agotado</p>
+                            }
+
+                            <button class="btn @(agregado == p.Id ? "btn-success" : "btn-primary") mt-auto"
+                                    disabled="@(p.Stock == 0)"
+                                    @onclick="() => AgregarAsync(p)">
+                                @(agregado == p.Id ? "✓ Agregado" : "Agregar al carrito")
+                            </button>
+                        </div>
+                        <div class="card-footer text-body-secondary small">@p.Codigo</div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}
+
+@code {
+    private static readonly System.Globalization.CultureInfo Cultura = new("es-CO");
+
+    private List<ProductoDto> productos = new();
+    private List<CategoriaDto> categorias = new();
+
+    private string busqueda = string.Empty;
+    private int categoriaId;
+
+    private bool cargando = true;
+    private string? error;
+
+    protected override async Task OnInitializedAsync() => await CargarAsync();
+
+    private async Task CargarAsync()
+    {
+        cargando = true;
+        error = null;
+
+        try
+        {
+            // Las dos peticiones salen a la vez en vez de una tras otra.
+            var tareaProductos = ProductoApi.ObtenerTodosAsync();
+            var tareaCategorias = CategoriaApi.ObtenerTodasAsync();
+
+            await Task.WhenAll(tareaProductos, tareaCategorias);
+
+            productos = await tareaProductos;
+            categorias = await tareaCategorias;
+        }
+        catch (ApiException ex)
+        {
+            error = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            error = "No se pudo conectar con el servidor.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private List<ProductoDto> Filtrados =>
+        productos
+            .Where(p => categoriaId == 0 || p.CategoriaId == categoriaId)
+            .Where(p => string.IsNullOrWhiteSpace(busqueda)
+                        || p.Nombre.Contains(busqueda, StringComparison.OrdinalIgnoreCase)
+                        || p.Codigo.Contains(busqueda, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+    private void OnBuscar(ChangeEventArgs e) => busqueda = e.Value?.ToString() ?? string.Empty;
+
+    private void OnCambiarCategoria(ChangeEventArgs e) =>
+        categoriaId = int.TryParse(e.Value?.ToString(), out var id) ? id : 0;
+
+    private int? agregado;
+
+    private async Task AgregarAsync(ProductoDto producto)
+    {
+        await Carrito.AgregarAsync(producto);
+
+        // Confirmación visual breve.
+        agregado = producto.Id;
+        StateHasChanged();
+
+        await Task.Delay(1200);
+
+        if (agregado == producto.Id)
+            agregado = null;
+    }
+}

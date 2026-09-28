@@ -1,0 +1,111 @@
+﻿@implements IDisposable
+
+<nav class="nav flex-column">
+
+    <div class="nav-item px-3">
+        <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+            <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Inicio
+        </NavLink>
+    </div>
+
+    <div class="nav-item px-3">
+        <NavLink class="nav-link" href="catalogo">
+            <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Catálogo
+        </NavLink>
+    </div>
+
+    <div class="nav-item px-3">
+        <NavLink class="nav-link" href="carrito">
+            <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span>
+            Carrito
+            @if (unidades > 0)
+            {
+                <span class="badge badge-carrito ms-1">@unidades</span>
+            }
+        </NavLink>
+    </div>
+    
+
+    <AuthorizeView>
+        <Authorized>
+            <div class="usuario">
+                @contexto(context)
+            </div>
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="mis-compras">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Mis compras
+                </NavLink>
+            </div>
+
+            <AuthorizeView Roles="Admin" Context="admin">
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="admin/productos">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Productos
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="admin/clientes">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Clientes
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="admin/ventas">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Ventas
+                    </NavLink>
+                </div>
+            </AuthorizeView>
+
+            <div class="nav-item px-3">
+                <button class="nav-link btn btn-link text-start" @onclick="CerrarSesionAsync">
+                    <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Cerrar sesión
+                </button>
+            </div>
+        </Authorized>
+
+        <NotAuthorized>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="login">
+                    <span class="bi bi-arrow-bar-right-nav-menu" aria-hidden="true"></span> Iniciar sesión
+                </NavLink>
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
+
+</nav>
+
+@code {
+    [Inject] private JwtAuthenticationStateProvider AuthProvider { get; set; } = default!;
+    [Inject] private NavigationManager Navegador { get; set; } = default!;
+    [Inject] private ICarritoService Carrito { get; set; } = default!;
+
+    private int unidades;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Carrito.Cambio += RefrescarAsync;
+
+        await RefrescarAsync();
+    }
+
+    private async Task RefrescarAsync()
+    {
+        unidades = await Carrito.ContarUnidadesAsync();
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task CerrarSesionAsync()
+    {
+        await AuthProvider.CerrarSesionAsync();
+        Navegador.NavigateTo("/");
+    }
+
+    private static string contexto(AuthenticationState estado) =>
+        estado.User.Identity?.Name ?? "Conectado";
+
+    public void Dispose()
+    {
+        Carrito.Cambio -= RefrescarAsync;
+    }
+}

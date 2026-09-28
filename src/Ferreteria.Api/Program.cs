@@ -2,6 +2,7 @@
 using Ferreteria.Api.Errors;
 using Ferreteria.Infrastructure;
 using Ferreteria.Infrastructure.Data;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi;
 
 
@@ -59,10 +60,24 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseBlazorFrameworkFiles();
+app.UseStaticFiles();
+
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Una ruta /api que ningun controlador reclamo es un endpoint inexistente:
+// 404 en JSON, no el HTML del Blazor.
+app.MapFallback("/api/{**ruta}", (HttpContext context) =>
+    Results.Problem(
+        title: "Endpoint no encontrado.",
+        statusCode: StatusCodes.Status404NotFound,
+        instance: context.Request.Path));
+
+// Cualquier otra ruta es navegacion del usuario: la resuelve el enrutador de Blazor.
+app.MapFallbackToFile("index.html");
 
 app.Run();
