@@ -24,6 +24,11 @@ namespace Ferreteria.Infrastructure
             services.AddScoped<IPasswordHasher, PasswordHasher>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<ICategoriaService, CategoriaService>();
+            services.AddScoped<IProductoService, ProductoService>();
+
+
+
 
             var jwt = configuration.GetSection("Jwt").Get<JwtSettings>()
                 ?? throw new InvalidOperationException("Falta la sección 'Jwt' en la configuración.");
