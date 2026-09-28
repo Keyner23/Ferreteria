@@ -1,6 +1,7 @@
 
 using Ferreteria.Api.Errors;
 using Ferreteria.Infrastructure;
+using Ferreteria.Infrastructure.Data;
 using Microsoft.OpenApi;
 
 
@@ -44,6 +45,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+await DbSeeder.SembrarAsync(app.Services);
 app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
