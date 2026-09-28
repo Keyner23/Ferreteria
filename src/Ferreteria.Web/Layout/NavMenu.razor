@@ -20,7 +20,7 @@
             Carrito
             @if (unidades > 0)
             {
-                <span class="badge bg-light text-dark ms-1">@unidades</span>
+                <span class="badge badge-carrito ms-1">@unidades</span>
             }
         </NavLink>
     </div>
@@ -28,7 +28,7 @@
 
     <AuthorizeView>
         <Authorized>
-            <div class="nav-item px-3 text-white small">
+            <div class="usuario">
                 @contexto(context)
             </div>
 

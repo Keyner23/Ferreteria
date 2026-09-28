@@ -1,7 +1,57 @@
-﻿@page "/"
+@page "/"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Ferretería El Tornillo</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="portada p-4 p-md-5 mb-4">
+    <h1 class="mb-2">Todo para tu obra, en un solo lugar</h1>
+    <p class="mb-4 portada-texto">
+        Herramientas, pintura, tornillería y plomería. Precios de mostrador,
+        pedidos en línea y recogida en tienda.
+    </p>
 
-Welcome to your new app.
+    <a href="catalogo" class="btn btn-primary btn-lg">Ver catálogo</a>
+
+    <AuthorizeView>
+        <NotAuthorized>
+            <a href="registro" class="btn btn-outline-light btn-lg ms-2">Crear cuenta</a>
+        </NotAuthorized>
+    </AuthorizeView>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="fs-3 mb-2">🔩</div>
+                <h5 class="card-title">Catálogo completo</h5>
+                <p class="card-text text-body-secondary small mb-0">
+                    Consulta precios y existencias al momento, sin llamar ni pasar por la tienda.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="fs-3 mb-2">🛒</div>
+                <h5 class="card-title">Pedido en línea</h5>
+                <p class="card-text text-body-secondary small mb-0">
+                    Arma tu carrito y confírmalo cuando quieras. Se guarda aunque cierres el navegador.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="fs-3 mb-2">🧾</div>
+                <h5 class="card-title">Historial de compras</h5>
+                <p class="card-text text-body-secondary small mb-0">
+                    Revisa lo que has pedido, con el detalle y el precio de cada artículo.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
