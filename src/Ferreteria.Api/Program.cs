@@ -1,4 +1,5 @@
 
+using Ferreteria.Api.Errors;
 using Ferreteria.Infrastructure;
 using Microsoft.OpenApi;
 
@@ -10,6 +11,9 @@ builder.Services.AddControllers();
 
 // Todo el cableado de Infrastructure en una línea
 builder.Services.AddInfrastructure(builder.Configuration);
+
+builder.Services.AddExceptionHandler<AppExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 builder.Services.AddSwaggerGen(options =>
 {
@@ -40,6 +44,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {
