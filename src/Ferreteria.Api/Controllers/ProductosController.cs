@@ -64,6 +64,5 @@ namespace Ferreteria.Api.Controllers
             await _productoService.DesactivarAsync(id);
             return NoContent();
         }
-
     }
 }
