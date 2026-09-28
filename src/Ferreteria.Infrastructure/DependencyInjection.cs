@@ -26,7 +26,7 @@ namespace Ferreteria.Infrastructure
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ICategoriaService, CategoriaService>();
             services.AddScoped<IProductoService, ProductoService>();
-
+            services.AddScoped<IVentaService, VentaService>();
 
 
 
