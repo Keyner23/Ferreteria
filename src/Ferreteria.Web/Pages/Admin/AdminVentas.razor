@@ -1,0 +1,96 @@
+﻿@page "/admin/ventas"
+@attribute [Authorize(Roles = "Admin")]
+@inject IVentaApi VentaApi
+
+<PageTitle>Ventas</PageTitle>
+
+<h1>Ventas</h1>
+
+@if (error is not null)
+{
+    <div class="alert alert-danger" role="alert">
+        @error
+        <button class="btn btn-sm btn-outline-danger ms-2" @onclick="CargarAsync">Reintentar</button>
+    </div>
+}
+
+@if (cargando)
+{
+    <p><em>Cargando ventas...</em></p>
+}
+else
+{
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="text-body-secondary small">Ventas</div>
+                    <div class="fs-4 fw-semibold">@ventas.Count</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="text-body-secondary small">Total vendido</div>
+                    <div class="fs-4 fw-semibold">$@TotalVendido.ToString("N0", Cultura)</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="text-body-secondary small">Artículos</div>
+                    <div class="fs-4 fw-semibold">@TotalArticulos</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="text-body-secondary small">Ticket promedio</div>
+                    <div class="fs-4 fw-semibold">$@TicketPromedio.ToString("N0", Cultura)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <TablaVentas Ventas="@ventas" MostrarCliente="true" />
+}
+
+@code {
+    private static readonly System.Globalization.CultureInfo Cultura = new("es-CO");
+
+    private List<VentaDto> ventas = new();
+    private bool cargando = true;
+    private string? error;
+
+    private decimal TotalVendido => ventas.Sum(v => v.Total);
+    private int TotalArticulos => ventas.Sum(v => v.Detalles.Sum(d => d.Cantidad));
+    private decimal TicketPromedio => ventas.Count == 0 ? 0 : TotalVendido / ventas.Count;
+
+    protected override async Task OnInitializedAsync() => await CargarAsync();
+
+    private async Task CargarAsync()
+    {
+        cargando = true;
+        error = null;
+
+        try
+        {
+            ventas = await VentaApi.ObtenerTodasAsync();
+        }
+        catch (ApiException ex)
+        {
+            error = ex.Message;
+        }
+        catch (HttpRequestException)
+        {
+            error = "No se pudo conectar con el servidor.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+}

@@ -1,0 +1,96 @@
+﻿@if (Ventas.Count == 0)
+{
+    <p><em>@TextoVacio</em></p>
+}
+else
+{
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th style="width: 40px;"></th>
+                <th>Pedido</th>
+                <th>Fecha</th>
+                @if (MostrarCliente)
+                {
+                    <th>Cliente</th>
+                }
+                <th class="text-end">Artículos</th>
+                <th class="text-end">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var v in Ventas)
+            {
+                <tr class="@(EstaExpandida(v.Id) ? "table-active" : "")">
+                    <td>
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2"
+                                @onclick="() => Alternar(v.Id)"
+                                title="Ver detalle">
+                            @(EstaExpandida(v.Id) ? "−" : "+")
+                        </button>
+                    </td>
+                    <td>#@v.Id</td>
+                    <td>@v.Fecha.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                    @if (MostrarCliente)
+                    {
+                        <td>@v.ClienteNombre</td>
+                    }
+                    <td class="text-end">@v.Detalles.Sum(d => d.Cantidad)</td>
+                    <td class="text-end fw-semibold">$@v.Total.ToString("N0", Cultura)</td>
+                </tr>
+
+                @if (EstaExpandida(v.Id))
+                {
+                    <tr>
+                        <td colspan="@(MostrarCliente ? 6 : 5)" class="bg-body-tertiary">
+                            <table class="table table-sm mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th class="text-end">Precio unitario</th>
+                                        <th class="text-end">Cantidad</th>
+                                        <th class="text-end">Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var d in v.Detalles)
+                                    {
+                                        <tr>
+                                            <td>@d.NombreProducto</td>
+                                            <td class="text-end">$@d.PrecioUnitario.ToString("N0", Cultura)</td>
+                                            <td class="text-end">@d.Cantidad</td>
+                                            <td class="text-end">$@d.Subtotal.ToString("N0", Cultura)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private static readonly System.Globalization.CultureInfo Cultura = new("es-CO");
+
+    [Parameter, EditorRequired]
+    public List<VentaDto> Ventas { get; set; } = new();
+
+    [Parameter]
+    public bool MostrarCliente { get; set; } = true;
+
+    [Parameter]
+    public string TextoVacio { get; set; } = "No hay ventas registradas.";
+
+    private readonly HashSet<int> expandidas = new();
+
+    private bool EstaExpandida(int id) => expandidas.Contains(id);
+
+    private void Alternar(int id)
+    {
+        if (!expandidas.Add(id))
+            expandidas.Remove(id);
+    }
+}
