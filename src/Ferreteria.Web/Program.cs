@@ -1,6 +1,8 @@
+
 using Blazored.LocalStorage;
 using Ferreteria.Web;
 using Ferreteria.Web.Auth;
+using Ferreteria.Web.Carrito;
 using Ferreteria.Web.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
@@ -16,6 +18,9 @@ builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<ITokenStore, TokenStore>();
 builder.Services.AddScoped<ICategoriaApi, CategoriaApi>();
 builder.Services.AddScoped<IProductoApi, ProductoApi>();
+builder.Services.AddScoped<ICarritoService, CarritoService>();
+builder.Services.AddScoped<IVentaApi, VentaApi>();
+builder.Services.AddScoped<IClienteApi, ClienteApi>();
 
 
 

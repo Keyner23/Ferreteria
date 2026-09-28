@@ -1,0 +1,78 @@
+﻿@page "/compra/{Id:int}"
+@attribute [Authorize]
+@inject IVentaApi VentaApi
+
+<PageTitle>Compra realizada</PageTitle>
+
+@if (cargando)
+{
+    <p><em>Cargando...</em></p>
+}
+else if (venta is null)
+{
+    <div class="alert alert-warning">No se encontró la compra.</div>
+}
+else
+{
+    <div class="alert alert-success">
+        <h4 class="alert-heading">¡Compra realizada!</h4>
+        Pedido #@venta.Id — @venta.Fecha.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th class="text-end">Precio</th>
+                <th class="text-end">Cantidad</th>
+                <th class="text-end">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var d in venta.Detalles)
+            {
+                <tr>
+                    <td>@d.NombreProducto</td>
+                    <td class="text-end">$@d.PrecioUnitario.ToString("N0", Cultura)</td>
+                    <td class="text-end">@d.Cantidad</td>
+                    <td class="text-end">$@d.Subtotal.ToString("N0", Cultura)</td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="3" class="text-end">Total</th>
+                <th class="text-end fs-5">$@venta.Total.ToString("N0", Cultura)</th>
+            </tr>
+        </tfoot>
+    </table>
+
+    <a href="catalogo" class="btn btn-primary">Seguir comprando</a>
+}
+
+@code {
+    private static readonly System.Globalization.CultureInfo Cultura = new("es-CO");
+
+    [Parameter] public int Id { get; set; }
+
+    private VentaDto? venta;
+    private bool cargando = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        cargando = true;
+
+        try
+        {
+            venta = await VentaApi.ObtenerPorIdAsync(Id);
+        }
+        catch (ApiException)
+        {
+            venta = null;
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+}

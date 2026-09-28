@@ -1,0 +1,278 @@
+﻿@page "/admin/productos"
+@attribute [Authorize(Roles = "Admin")]
+@inject IProductoApi ProductoApi
+@inject ICategoriaApi CategoriaApi
+@inject IJSRuntime JS
+
+<PageTitle>Productos</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Productos</h1>
+    <button class="btn btn-primary" @onclick="NuevoAsync" disabled="@(formulario is not null)">
+        Nuevo producto
+    </button>
+</div>
+
+@if (mensaje is not null)
+{
+    <div class="alert alert-@tipoMensaje alert-dismissible" role="alert">
+        @mensaje
+        <button type="button" class="btn-close" @onclick="() => mensaje = null"></button>
+    </div>
+}
+
+@if (formulario is not null)
+{
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">@(editandoId is null ? "Nuevo producto" : $"Editar producto #{editandoId}")</h5>
+
+            <EditForm Model="@formulario" OnValidSubmit="@GuardarAsync" FormName="producto">
+                <DataAnnotationsValidator />
+
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Código</label>
+                        <InputText class="form-control" @bind-Value="formulario.Codigo" />
+                        <ValidationMessage For="@(() => formulario.Codigo)" />
+                    </div>
+
+                    <div class="col-md-5">
+                        <label class="form-label">Nombre</label>
+                        <InputText class="form-control" @bind-Value="formulario.Nombre" />
+                        <ValidationMessage For="@(() => formulario.Nombre)" />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Categoría</label>
+                        <InputSelect class="form-select" @bind-Value="formulario.CategoriaId">
+                            <option value="0">Seleccione...</option>
+                            @foreach (var c in categorias)
+                            {
+                                <option value="@c.Id">@c.Nombre</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => formulario.CategoriaId)" />
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Descripción</label>
+                        <InputTextArea class="form-control" rows="2" @bind-Value="formulario.Descripcion" />
+                        <ValidationMessage For="@(() => formulario.Descripcion)" />
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Precio</label>
+                        <InputNumber class="form-control" @bind-Value="formulario.PrecioUnitario" />
+                        <ValidationMessage For="@(() => formulario.PrecioUnitario)" />
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Stock</label>
+                        <InputNumber class="form-control" @bind-Value="formulario.Stock" />
+                        <ValidationMessage For="@(() => formulario.Stock)" />
+                    </div>
+
+                    <div class="col-md-3 d-flex align-items-end">
+                        <div class="form-check">
+                            <InputCheckbox class="form-check-input" id="activo" @bind-Value="formulario.Activo" />
+                            <label class="form-check-label" for="activo">Activo</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-success" disabled="@guardando">
+                        @(guardando ? "Guardando..." : "Guardar")
+                    </button>
+                    <button type="button" class="btn btn-secondary ms-2" @onclick="Cancelar">Cancelar</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@if (cargando)
+{
+    <p><em>Cargando...</em></p>
+}
+else
+{
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Categoría</th>
+                <th class="text-end">Precio</th>
+                <th class="text-end">Stock</th>
+                <th>Estado</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in productos)
+            {
+                <tr class="@(p.Activo ? "" : "table-secondary")">
+                    <td>@p.Codigo</td>
+                    <td>@p.Nombre</td>
+                    <td>@p.CategoriaNombre</td>
+                    <td class="text-end">$@p.PrecioUnitario.ToString("N0", Cultura)</td>
+                    <td class="text-end">@p.Stock</td>
+                    <td>
+                        @if (p.Activo)
+                        {
+                            <span class="badge bg-success">Activo</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Inactivo</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-primary" @onclick="() => EditarAsync(p)">Editar</button>
+                        @if (p.Activo)
+                        {
+                            <button class="btn btn-sm btn-outline-danger ms-1"
+                                    @onclick="() => DesactivarAsync(p)">Desactivar</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private static readonly System.Globalization.CultureInfo Cultura = new("es-CO");
+
+    private List<ProductoDto> productos = new();
+    private List<CategoriaDto> categorias = new();
+
+    private ProductoRequest? formulario;
+    private int? editandoId;
+
+    private bool cargando = true;
+    private bool guardando;
+    private string? mensaje;
+    private string tipoMensaje = "success";
+
+    protected override async Task OnInitializedAsync() => await CargarAsync();
+
+    private async Task CargarAsync()
+    {
+        cargando = true;
+
+        try
+        {
+            var tProductos = ProductoApi.ObtenerTodosAsync(incluirInactivos: true);
+            var tCategorias = CategoriaApi.ObtenerTodasAsync();
+
+            await Task.WhenAll(tProductos, tCategorias);
+
+            productos = await tProductos;
+            categorias = await tCategorias;
+        }
+        catch (ApiException ex)
+        {
+            Avisar(ex.Message, "danger");
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private Task NuevoAsync()
+    {
+        editandoId = null;
+        formulario = new ProductoRequest { Activo = true };
+
+        return Task.CompletedTask;
+    }
+
+    private Task EditarAsync(ProductoDto p)
+    {
+        editandoId = p.Id;
+        formulario = new ProductoRequest
+        {
+            Codigo = p.Codigo,
+            Nombre = p.Nombre,
+            Descripcion = p.Descripcion,
+            PrecioUnitario = p.PrecioUnitario,
+            Stock = p.Stock,
+            CategoriaId = p.CategoriaId,
+            Activo = p.Activo
+        };
+
+        return Task.CompletedTask;
+    }
+
+    private void Cancelar()
+    {
+        formulario = null;
+        editandoId = null;
+    }
+
+    private async Task GuardarAsync()
+    {
+        if (formulario is null)
+            return;
+
+        guardando = true;
+
+        try
+        {
+            if (editandoId is null)
+            {
+                var creado = await ProductoApi.CrearAsync(formulario);
+                Avisar($"Producto '{creado.Nombre}' creado.", "success");
+            }
+            else
+            {
+                await ProductoApi.ActualizarAsync(editandoId.Value, formulario);
+                Avisar("Producto actualizado.", "success");
+            }
+
+            Cancelar();
+            await CargarAsync();
+        }
+        catch (ApiException ex)
+        {
+            // El formulario se queda abierto para que el admin corrija.
+            Avisar(ex.Message, "danger");
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private async Task DesactivarAsync(ProductoDto p)
+    {
+        var confirmado = await JS.InvokeAsync<bool>("confirm",
+            $"¿Desactivar '{p.Nombre}'? Dejará de verse en el catálogo.");
+
+        if (!confirmado)
+            return;
+
+        try
+        {
+            await ProductoApi.DesactivarAsync(p.Id);
+
+            Avisar($"'{p.Nombre}' desactivado.", "success");
+
+            await CargarAsync();
+        }
+        catch (ApiException ex)
+        {
+            Avisar(ex.Message, "danger");
+        }
+    }
+
+    private void Avisar(string texto, string tipo)
+    {
+        mensaje = texto;
+        tipoMensaje = tipo;
+    }
+}
