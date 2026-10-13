@@ -7,4 +7,7 @@
     <Project Path="src/Ferreteria.Shared/Ferreteria.Shared.csproj" />
     <Project Path="src/Ferreteria.Web/Ferreteria.Web.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Ferreteria.Tests/Ferreteria.Tests.csproj" />
+  </Folder>
 </Solution>
