@@ -24,18 +24,17 @@
             }
         </NavLink>
     </div>
-    
 
+    <div class="nav-item px-3">
+        <NavLink class="nav-link" href="mis-compras">
+            <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Mis compras
+        </NavLink>
+    </div>
+    
     <AuthorizeView>
         <Authorized>
             <div class="usuario">
                 @contexto(context)
-            </div>
-
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="mis-compras">
-                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Mis compras
-                </NavLink>
             </div>
 
             <AuthorizeView Roles="Admin" Context="admin">
@@ -44,16 +43,28 @@
                         <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Productos
                     </NavLink>
                 </div>
+
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="admin/clientes">
-                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Clientes
+                    <NavLink class="nav-link" href="admin/inventario">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Inventario
                     </NavLink>
                 </div>
+                
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="admin/ventas">
                         <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Ventas
                     </NavLink>
                 </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="admin/clientes">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Clientes
+                    </NavLink>
+                </div>
+
+
+                
+
             </AuthorizeView>
 
             <div class="nav-item px-3">
